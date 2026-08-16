@@ -1,45 +1,44 @@
 -- Sky Doodles Mod
 -- Autonomous, non-interactive decorative airplanes
 
-mobs:register_mob("sky_doodles:airplane", {
-    type = "npc", -- Just a generic type
-    passive = true,
-    damage = 0,
-    hp_min = 1,
-    hp_max = 1,
-    armor = 100,
-    collisionbox = {-2, -1, -2, 2, 1, 2},
-    visual = "mesh",
-    mesh = "airliner.obj",
-    textures = {
-        {"sky_doodles_black.png"}
+minetest.register_entity("sky_doodles:airplane", {
+    initial_properties = {
+        hp_max = 1,
+        physical = true,
+        collide_with_objects = true,
+        collisionbox = {-2, -1, -2, 2, 1, 2},
+        visual = "mesh",
+        mesh = "airliner.obj",
+        textures = {"sky_doodles_black.png"},
+        visual_size = {x = 1, y = 1},
+        makes_footstep_sound = false,
+        static_save = false, -- decorative, no need to save to disk
     },
-    visual_size = {x = 1, y = 1},
-    makes_footstep_sound = false,
 
-    -- No interaction
-    on_rightclick = nil,
-    on_punch = nil,
-    drops = {},
-    sounds = {},
+    on_activate = function(self, staticdata, dtime_s)
+        self.object:set_armor_groups({immortal = 1})
+        local yaw = math.random() * math.pi * 2
+        self.object:set_yaw(yaw)
+        local speed = 4
+        self.object:set_velocity({
+            x = -math.sin(yaw) * speed,
+            y = 0,
+            z = math.cos(yaw) * speed
+        })
+    end,
 
-    -- Physics
-    fly = true,
-    fly_in = {"air"},
-    walk_chance = 0,
-    jump = false,
-    fall_speed = 0,
+    on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, dir)
+        return false -- No interaction
+    end,
+    on_rightclick = function(self, clicker)
+        return false -- No interaction
+    end,
 
-    -- Initial speed/facing
-    run_velocity = 4,
-    walk_velocity = 4,
-
-    do_custom = function(self, dtime)
+    on_step = function(self, dtime)
         local pos = self.object:get_pos()
-        if not pos then return false end
+        if not pos then return end
 
         -- Distance despawn (>500 nodes from nearest player)
-        -- We throttle this check to save performance
         self.despawn_timer = (self.despawn_timer or 0) + dtime
         if self.despawn_timer > 2 then
             self.despawn_timer = 0
@@ -54,7 +53,7 @@ mobs:register_mob("sky_doodles:airplane", {
             end
             if too_far then
                 self.object:remove()
-                return false
+                return
             end
         end
 
@@ -70,7 +69,6 @@ mobs:register_mob("sky_doodles:airplane", {
         -- Zero out vertical velocity and keep horizontal speed
         local vel = self.object:get_velocity()
         if vel then
-            -- Calculate forward velocity based on yaw
             local vx = -math.sin(yaw) * speed
             local vz = math.cos(yaw) * speed
             self.object:set_velocity({x = vx, y = 0, z = vz})
@@ -87,7 +85,7 @@ mobs:register_mob("sky_doodles:airplane", {
         local los, blocked_pos = minetest.line_of_sight(pos, front_pos)
         if not los then
             self.object:remove()
-            return false
+            return
         end
 
         -- Check for other sky_doodles planes within 3 nodes
@@ -98,7 +96,7 @@ mobs:register_mob("sky_doodles:airplane", {
                     -- Destroy both
                     obj:remove()
                     self.object:remove()
-                    return false
+                    return
                 end
             end
         end
@@ -132,23 +130,28 @@ mobs:register_mob("sky_doodles:airplane", {
                 glow = 0,
             })
         end
-
-        return false -- return false to skip Mobs Redo default movement/physics
     end,
 })
 
+-- Custom ABM spawner for airplanes
+minetest.register_abm({
+    label = "sky_doodles_spawner",
+    nodenames = {"air"},
+    interval = 10,
+    chance = 50, -- 1 in 50 chance every 10 seconds per air node (quite low since air is everywhere)
+    min_y = 136,
+    max_y = 136,
+    action = function(pos, node, active_object_count, active_object_count_wider)
+        if active_object_count_wider > 2 then
+            return -- Limit number of planes nearby
+        end
 
--- Spawning logic
-mobs:register_spawn({
-    name = "sky_doodles:airplane",
-    nodes = {"air"},
-    min_light = 0,
-    max_light = 15,
-    chance = 10, -- 10% chance (1 in 10)
-    active_object_count = 50,
-    min_height = 136,
-    max_height = 136,
-    on_spawn = function(self, pos)
+        -- Check light level (only spawn during day/light conditions)
+        local light = minetest.get_node_light(pos)
+        if not light then
+            return
+        end
+
         local r = 20
         -- Check points around the plane to ensure there are no mountains/buildings
         local checks = {
@@ -162,13 +165,13 @@ mobs:register_spawn({
             {x = pos.x - r, y = pos.y, z = pos.z + r},
         }
         for _, p in ipairs(checks) do
-            local node = minetest.get_node(p)
-            if node and node.name ~= "air" and node.name ~= "ignore" then
-                -- Clearance check failed, destroy object
-                self.object:remove()
-                return false
+            local n = minetest.get_node(p)
+            if n and n.name ~= "air" and n.name ~= "ignore" then
+                -- Clearance check failed
+                return
             end
         end
-        return true
+
+        minetest.add_entity(pos, "sky_doodles:airplane")
     end,
 })
