@@ -38,7 +38,7 @@ mobs:register_mob("sky_doodles:airplane", {
         local pos = self.object:get_pos()
         if not pos then return false end
 
-        -- Distance despawn (>100 nodes from nearest player)
+        -- Distance despawn (>500 nodes from nearest player)
         -- We throttle this check to save performance
         self.despawn_timer = (self.despawn_timer or 0) + dtime
         if self.despawn_timer > 2 then
@@ -47,7 +47,7 @@ mobs:register_mob("sky_doodles:airplane", {
             local too_far = true
             for _, player in ipairs(players) do
                 local ppos = player:get_pos()
-                if ppos and vector.distance(pos, ppos) <= 100 then
+                if ppos and vector.distance(pos, ppos) <= 500 then
                     too_far = false
                     break
                 end
@@ -58,9 +58,9 @@ mobs:register_mob("sky_doodles:airplane", {
             end
         end
 
-        -- Enforce Y=186 altitude
-        if math.abs(pos.y - 186) > 0.1 then
-            pos.y = 186
+        -- Enforce Y=136 altitude
+        if math.abs(pos.y - 136) > 0.1 then
+            pos.y = 136
             self.object:set_pos(pos)
         end
 
@@ -144,10 +144,10 @@ mobs:register_spawn({
     nodes = {"air"},
     min_light = 0,
     max_light = 15,
-    chance = 100, -- 1% chance (1 in 100)
-    active_object_count = 10,
-    min_height = 186,
-    max_height = 186,
+    chance = 10, -- 10% chance (1 in 10)
+    active_object_count = 50,
+    min_height = 136,
+    max_height = 136,
     on_spawn = function(self, pos)
         local r = 20
         -- Check points around the plane to ensure there are no mountains/buildings
