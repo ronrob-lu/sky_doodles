@@ -58,9 +58,9 @@ mobs:register_mob("sky_doodles:airplane", {
             end
         end
 
-        -- Enforce Y=136 altitude
-        if math.abs(pos.y - 136) > 0.1 then
-            pos.y = 136
+        -- Enforce Y=186 altitude
+        if math.abs(pos.y - 186) > 0.1 then
+            pos.y = 186
             self.object:set_pos(pos)
         end
 
@@ -146,8 +146,8 @@ mobs:register_spawn({
     max_light = 15,
     chance = 100, -- 1% chance (1 in 100)
     active_object_count = 10,
-    min_height = 136,
-    max_height = 136,
+    min_height = 186,
+    max_height = 186,
     on_spawn = function(self, pos)
         local r = 20
         -- Check points around the plane to ensure there are no mountains/buildings
