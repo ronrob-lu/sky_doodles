@@ -6,11 +6,11 @@ minetest.register_entity("sky_doodles:airplane", {
         hp_max = 1,
         physical = true,
         collide_with_objects = true,
-        collisionbox = {-2, -1, -2, 2, 1, 2},
+        collisionbox = {-6, -3, -6, 6, 3, 6},
         visual = "mesh",
         mesh = "airliner.obj",
         textures = {"sky_doodles_black.png"},
-        visual_size = {x = 1, y = 1},
+        visual_size = {x = 3, y = 3, z = 3},
         makes_footstep_sound = false,
         static_save = false, -- decorative, no need to save to disk
     },
@@ -57,9 +57,9 @@ minetest.register_entity("sky_doodles:airplane", {
             end
         end
 
-        -- Enforce Y=136 altitude
-        if math.abs(pos.y - 136) > 0.1 then
-            pos.y = 136
+        -- Enforce Y=200 altitude
+        if math.abs(pos.y - 200) > 0.1 then
+            pos.y = 200
             self.object:set_pos(pos)
         end
 
@@ -139,8 +139,8 @@ minetest.register_abm({
     nodenames = {"air"},
     interval = 10,
     chance = 50, -- 1 in 50 chance every 10 seconds per air node (quite low since air is everywhere)
-    min_y = 136,
-    max_y = 136,
+    min_y = 200,
+    max_y = 200,
     action = function(pos, node, active_object_count, active_object_count_wider)
         if active_object_count_wider > 2 then
             return -- Limit number of planes nearby
